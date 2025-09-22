@@ -10,12 +10,22 @@ pub enum FractionStrategy {
     Simplify,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LookupVariant {
+    /// No lookup
+    None,
+    /// Basic lookup for common values usually matching closely the original value
+    Basic,
+    /// Extended lookup - covers more values but also gives more rounded results, f. ex. 1.0013 -> 1/750 instead of 1/768
+    Extended,
+}
+
 /// Configuration for conversion functions.
 #[derive(Debug, Clone, Copy)]
 pub struct ConversionConfig {
     /// Use lookup tables first for conversion, then fallback to regular computations
     /// Note: When using lookup tables feature, conversion from 1.67 or -150 gives 4/6 instead of 2/3 (see README.md)
-    pub use_lookup_tables: bool,
+    pub lookup_tables_variant: LookupVariant,
     /// Fractions computing strategy
     pub fraction_strategy: FractionStrategy,
     /// Rounding method for Decimal type
@@ -34,28 +44,33 @@ impl Default for ConversionConfig {
 }
 
 static DEFAULT_CONVERSION_CONFIG: ConversionConfig = ConversionConfig {
-    use_lookup_tables: true,
+    lookup_tables_variant: LookupVariant::Basic,
     fraction_strategy: FractionStrategy::Simplify,
     rounding_strategy: RoundingStrategy::MidpointAwayFromZero, // former RoundHalfUp
 };
 
 impl ConversionConfig {
-    pub fn no_lookup(&mut self) -> &mut Self {
-        self.use_lookup_tables = false;
+    pub fn no_lookup(mut self) -> Self {
+        self.lookup_tables_variant = LookupVariant::None;
         self
     }
 
-    pub fn plain_fraction_strategy(&mut self) -> &mut Self {
+    pub fn extended_lookup(mut self) -> Self {
+        self.lookup_tables_variant = LookupVariant::Extended;
+        self
+    }
+
+    pub fn plain_fraction_strategy(mut self) -> Self {
         self.fraction_strategy = FractionStrategy::Plain;
         self
     }
 
-    pub fn fraction_strategy(&mut self, strategy: FractionStrategy) -> &mut Self {
+    pub fn fraction_strategy(mut self, strategy: FractionStrategy) -> Self {
         self.fraction_strategy = strategy;
         self
     }
 
-    pub fn rounding_strategy(&mut self, strategy: RoundingStrategy) -> &mut Self {
+    pub fn rounding_strategy(mut self, strategy: RoundingStrategy) -> Self {
         self.rounding_strategy = strategy;
         self
     }
