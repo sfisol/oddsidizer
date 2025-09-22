@@ -185,10 +185,7 @@ mod tests {
         assert_eq!(american.to_fractional(), Ok((4, 6)));
 
         assert_eq!(
-            american.to_fractional_custom(&ConversionConfig {
-                use_lookup_tables: false,
-                ..Default::default()
-            }),
+            american.to_fractional_custom(&ConversionConfig::default().no_lookup()),
             Ok((2, 3))
         );
 
@@ -228,10 +225,7 @@ mod tests {
 
         assert_eq!(
             Odds::American(-150)
-                .to_fractional_str_custom(&ConversionConfig {
-                    use_lookup_tables: false,
-                    ..Default::default()
-                })
+                .to_fractional_str_custom(&ConversionConfig::default().no_lookup())
                 .unwrap(),
             "2/3"
         );

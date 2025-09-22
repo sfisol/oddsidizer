@@ -80,6 +80,48 @@ pub fn get_decimal_to_fraction_map() -> &'static HashMap<Decimal, (u32, u32)> {
         m.insert(dec!(67), (66, 1));
         m.insert(dec!(101), (100, 1));
         m.insert(dec!(1001), (1000, 1));
+
+        m
+    })
+}
+
+// Accessor for DECIMAL_TO_FRACTION extended Map
+static DECIMAL_TO_FRACTION_EXTENDED: OnceLock<HashMap<Decimal, (u32, u32)>> = OnceLock::new();
+
+/// Extended lookup table for conversion from decimal to fractional.
+pub fn get_decimal_to_fraction_extended_map() -> &'static HashMap<Decimal, (u32, u32)> {
+    DECIMAL_TO_FRACTION_EXTENDED.get_or_init(|| {
+        let mut m = HashMap::new();
+        m.insert(dec!(1.0013), (1, 750));
+        m.insert(dec!(1.0030), (1, 300));
+        m.insert(dec!(1.0070), (1, 150));
+        m.insert(dec!(1.0120), (1, 80));
+        m.insert(dec!(1.0150), (1, 66));
+        m.insert(dec!(1.0300), (1, 33));
+        m.insert(dec!(1.0550), (1, 18));
+        m.insert(dec!(1.0600), (1, 16));
+        m.insert(dec!(1.0700), (1, 14));
+        m.insert(dec!(1.0800), (1, 12));
+        m.insert(dec!(1.0900), (1, 11));
+        m.insert(dec!(1.1100), (1, 9));
+        m.insert(dec!(1.1200), (1, 8));
+        m.insert(dec!(1.1300), (2, 15));
+        m.insert(dec!(1.1400), (1, 7));
+        m.insert(dec!(1.1500), (2, 13));
+        m.insert(dec!(1.1600), (1, 6));
+        m.insert(dec!(1.1800), (2, 11)); // D
+        m.insert(dec!(1.4700), (40, 85));
+        m.insert(dec!(1.6100), (8, 13));
+        m.insert(dec!(1.6600), (4, 6));
+        m.insert(dec!(1.6800), (34, 50)); // D
+        m.insert(dec!(1.7200), (8, 11));
+        m.insert(dec!(1.8600), (20, 23)); // D
+        m.insert(dec!(1.9500), (20, 21));
+        m.insert(dec!(1.9600), (24, 25)); // D
+        m.insert(dec!(1.9800), (49, 50)); // D
+        m.insert(dec!(2.3700), (11, 8));
+        m.insert(dec!(2.8700), (15, 8)); // D
+        m.insert(dec!(3.1250), (85, 40));
         m
     })
 }
@@ -164,6 +206,14 @@ pub fn get_american_to_fraction_map() -> &'static HashMap<i32, (u32, u32)> {
     })
 }
 
+// Accessor for AMERICAN_TO_FRACTION extended Map
+static AMERICAN_TO_FRACTION_EXTENDED: OnceLock<HashMap<i32, (u32, u32)>> = OnceLock::new();
+
+/// Extended lookup table for conversion from american to fractional.
+pub fn get_american_to_fraction_extended_map() -> &'static HashMap<i32, (u32, u32)> {
+    AMERICAN_TO_FRACTION_EXTENDED.get_or_init(HashMap::new)
+}
+
 // Accessor for AMERICAN_TO_DECIMAL Map
 static AMERICAN_TO_DECIMAL: OnceLock<HashMap<i32, Decimal>> = OnceLock::new();
 
@@ -242,4 +292,13 @@ pub fn get_american_to_decimal_map() -> &'static HashMap<i32, Decimal> {
         m.insert(100000, dec!(1001));
         m
     })
+}
+
+// Accessor for AMERICAN_TO_DECIMAL extended Map
+static AMERICAN_TO_DECIMAL_EXTENDED: OnceLock<HashMap<i32, Decimal>> = OnceLock::new();
+
+/// Extended lookup table for conversion from american to decimal.
+pub fn get_american_to_decimal_extended_map() -> &'static HashMap<i32, Decimal> {
+    // TODO
+    AMERICAN_TO_DECIMAL_EXTENDED.get_or_init(HashMap::new)
 }
