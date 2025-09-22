@@ -4,9 +4,10 @@ use std::sync::OnceLock;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
-// --- Accessor for DECIMAL_TO_FRACTION Map ---
+// Accessor for DECIMAL_TO_FRACTION Map
 static DECIMAL_TO_FRACTION: OnceLock<HashMap<Decimal, (u32, u32)>> = OnceLock::new();
 
+/// Lookup table for conversion from decimal to fractional.
 pub fn get_decimal_to_fraction_map() -> &'static HashMap<Decimal, (u32, u32)> {
     DECIMAL_TO_FRACTION.get_or_init(|| {
         let mut m = HashMap::new();
@@ -83,9 +84,10 @@ pub fn get_decimal_to_fraction_map() -> &'static HashMap<Decimal, (u32, u32)> {
     })
 }
 
-// --- Accessor for AMERICAN_TO_FRACTION Map ---
+// Accessor for AMERICAN_TO_FRACTION Map
 static AMERICAN_TO_FRACTION: OnceLock<HashMap<i32, (u32, u32)>> = OnceLock::new();
 
+/// Lookup table for conversion from american to fractional.
 pub fn get_american_to_fraction_map() -> &'static HashMap<i32, (u32, u32)> {
     AMERICAN_TO_FRACTION.get_or_init(|| {
         let mut m = HashMap::new();
@@ -162,9 +164,10 @@ pub fn get_american_to_fraction_map() -> &'static HashMap<i32, (u32, u32)> {
     })
 }
 
-// --- Accessor for AMERICAN_TO_DECIMAL Map ---
+// Accessor for AMERICAN_TO_DECIMAL Map
 static AMERICAN_TO_DECIMAL: OnceLock<HashMap<i32, Decimal>> = OnceLock::new();
 
+/// Lookup table for conversion from american to decimal.
 pub fn get_american_to_decimal_map() -> &'static HashMap<i32, Decimal> {
     AMERICAN_TO_DECIMAL.get_or_init(|| {
         let mut m = HashMap::new();

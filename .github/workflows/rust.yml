@@ -16,13 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Fmt
+      run: cargo fmt --verbose --check --all
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --all
     - name: Run tests
-      run: cargo test --verbose
-    - name: Run tests (no-default-features)
-      run: cargo test --verbose --no-default-features
-    - name: Run tests (no-default-features, lookup)
-      run: cargo test --verbose --no-default-features --features lookup
-    - name: Run tests (no-default-features, fractions_simplify)
-      run: cargo test --verbose --no-default-features --features fractions_simplify
+      run: cargo test --verbose --all

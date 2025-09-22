@@ -1,18 +1,30 @@
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use rust_decimal_macros::dec;
 
-#[cfg(feature = "lookup")]
-use crate::lookup_tables::{
-    get_american_to_decimal_map, get_american_to_fraction_map, get_decimal_to_fraction_map,
+use crate::{
+    ConversionConfig, FractionStrategy,
+    lookup_tables::{
+        get_american_to_decimal_map, get_american_to_fraction_map, get_decimal_to_fraction_map,
+    },
 };
 
+/// Convert from american to decimal using default parameters.
 pub fn american_to_decimal(value: i32) -> Result<Decimal, ConversionError> {
+    american_to_decimal_custom(value, &ConversionConfig::default())
+}
+
+/// Convert from american to decimal using custom parameters.
+pub fn american_to_decimal_custom(
+    value: i32,
+    config: &ConversionConfig,
+) -> Result<Decimal, ConversionError> {
     if value == 0 {
         return Err(ConversionError::AmericanZero);
     }
 
-    #[cfg(feature = "lookup")]
-    if let Some(ret) = get_american_to_decimal_map().get(&value) {
+    if config.use_lookup_tables
+        && let Some(ret) = get_american_to_decimal_map().get(&value)
+    {
         return Ok(*ret);
     }
 
@@ -30,6 +42,7 @@ fn american_to_decimal_inner(value: i32) -> Result<Decimal, ConversionError> {
     }
 }
 
+// Convert from fractional to decimal (doesn't use conversion parameters).
 pub fn fractional_to_decimal(num: u32, den: u32) -> Result<Decimal, ConversionError> {
     if den == 0 {
         Err(ConversionError::DenominatorZero)
@@ -38,26 +51,44 @@ pub fn fractional_to_decimal(num: u32, den: u32) -> Result<Decimal, ConversionEr
     }
 }
 
+// Convert from decimal to fractional using default parameters.
 pub fn decimal_to_fractional(value: Decimal) -> Result<(u32, u32), ConversionError> {
-    #[cfg(feature = "fractions_simplify")]
-    return decimal_to_fractional_complex(value);
-
-    #[cfg(not(feature = "fractions_simplify"))]
-    return decimal_to_fractional_complex(value);
+    decimal_to_fractional_custom(value, &ConversionConfig::default())
 }
 
-pub fn decimal_to_fractional_simple(value: Decimal) -> Result<(u32, u32), ConversionError> {
+// Convert from decimal to fractional using custom parameters.
+pub fn decimal_to_fractional_custom(
+    value: Decimal,
+    config: &ConversionConfig,
+) -> Result<(u32, u32), ConversionError> {
+    if config.use_lookup_tables
+        && let Some(ret) = get_decimal_to_fraction_map().get(&value)
+    {
+        return Ok(*ret);
+    }
+
+    match config.fraction_strategy {
+        FractionStrategy::Plain => decimal_to_fractional_plain(value, config),
+        FractionStrategy::Simplify => decimal_to_fractional_simplify(value),
+    }
+}
+
+/// Convert from decimal to fractional with plain fractional strategy.
+///
+/// Bypasses look tables.
+pub fn decimal_to_fractional_plain(
+    value: Decimal,
+    config: &ConversionConfig,
+) -> Result<(u32, u32), ConversionError> {
     if value <= Decimal::ONE {
         return Err(ConversionError::InvalidDecimal);
     }
 
-    #[cfg(feature = "lookup")]
-    if let Some(ret) = get_decimal_to_fraction_map().get(&value) {
-        return Ok(*ret);
-    }
-
     let numerator = (value - Decimal::ONE) * Decimal::ONE_THOUSAND;
-    let numerator = numerator.round().to_u64().unwrap_or_default();
+    let numerator = numerator
+        .round_dp_with_strategy(0, config.rounding_strategy)
+        .to_u64()
+        .unwrap_or_default();
 
     let divisor: u64 = num_integer::gcd(numerator, 100000);
 
@@ -70,16 +101,12 @@ pub fn decimal_to_fractional_simple(value: Decimal) -> Result<(u32, u32), Conver
     ))
 }
 
-// Conversion from decimal to fractional using a continued fraction algorithm
-// to find the best rational approximation.
-pub fn decimal_to_fractional_complex(value: Decimal) -> Result<(u32, u32), ConversionError> {
+/// Conversion from decimal to fractional using a continued fraction algorithm to find the best rational approximation.
+///
+/// This usually produce simplified fractions. Bypasses look tables.
+pub fn decimal_to_fractional_simplify(value: Decimal) -> Result<(u32, u32), ConversionError> {
     if value <= Decimal::ONE {
         return Err(ConversionError::InvalidDecimal);
-    }
-
-    #[cfg(feature = "lookup")]
-    if let Some(ret) = get_decimal_to_fraction_map().get(&value) {
-        return Ok(*ret);
     }
 
     let fractional_part = value - Decimal::ONE;
@@ -139,9 +166,19 @@ pub fn decimal_to_fractional_complex(value: Decimal) -> Result<(u32, u32), Conve
     Ok((num as u32, den as u32))
 }
 
+/// Convert from american to fractional with default parameters.
 pub fn american_to_fractional(value: i32) -> Result<(u32, u32), ConversionError> {
-    #[cfg(feature = "lookup")]
-    if let Some(ret) = get_american_to_fraction_map().get(&value) {
+    american_to_fractional_custom(value, &ConversionConfig::default())
+}
+
+/// Convert from american to fractional with custom parameters.
+pub fn american_to_fractional_custom(
+    value: i32,
+    config: &ConversionConfig,
+) -> Result<(u32, u32), ConversionError> {
+    if config.use_lookup_tables
+        && let Some(ret) = get_american_to_fraction_map().get(&value)
+    {
         return Ok(*ret);
     }
 
@@ -149,16 +186,25 @@ pub fn american_to_fractional(value: i32) -> Result<(u32, u32), ConversionError>
     decimal_to_fractional(decimal)
 }
 
+/// Convert from decimal to american with default parameters.
 pub fn decimal_to_american(decimal: Decimal) -> Result<i32, ConversionError> {
+    decimal_to_american_custom(decimal, &ConversionConfig::default())
+}
+
+/// Convert from decimal to american with custom parameters.
+pub fn decimal_to_american_custom(
+    decimal: Decimal,
+    config: &ConversionConfig,
+) -> Result<i32, ConversionError> {
     if decimal >= Decimal::TWO {
         ((decimal - Decimal::ONE) * Decimal::ONE_HUNDRED)
-            .round()
+            .round_dp_with_strategy(0, config.rounding_strategy)
             .to_i32()
             .ok_or(ConversionError::DecimalOverflow)
             .map(normalize_american_odds)
     } else if decimal > Decimal::ONE {
         (-Decimal::ONE_HUNDRED / (decimal - Decimal::ONE))
-            .round()
+            .round_dp_with_strategy(0, config.rounding_strategy)
             .to_i32()
             .ok_or(ConversionError::DecimalOverflow)
     } else {
@@ -166,14 +212,25 @@ pub fn decimal_to_american(decimal: Decimal) -> Result<i32, ConversionError> {
     }
 }
 
+/// Convert from fractional to american with default parameters.
 pub fn fractional_to_american(num: u32, den: u32) -> Result<i32, ConversionError> {
+    fractional_to_american_custom(num, den, &ConversionConfig::default())
+}
+
+/// Convert from fractional to american with custom parameters.
+pub fn fractional_to_american_custom(
+    num: u32,
+    den: u32,
+    config: &ConversionConfig,
+) -> Result<i32, ConversionError> {
     if den == 0 {
         return Err(ConversionError::DenominatorZero);
     }
     let decimal = Decimal::from(num) / Decimal::from(den) + Decimal::ONE;
-    decimal_to_american(decimal)
+    decimal_to_american_custom(decimal, config)
 }
 
+/// Normalize american odds (converts 1-99 to negative values, -1-99 to positive values).
 pub fn normalize_american_odds(odds: i32) -> i32 {
     if odds > 0 && odds < 100 {
         // 1-99 -> -xxx
@@ -188,18 +245,23 @@ pub fn normalize_american_odds(odds: i32) -> i32 {
 
 #[derive(Debug, PartialEq)]
 pub enum ConversionError {
+    /// American odds value cannot be zero.
     AmericanZero,
+    /// Denominator in fractional odds cannot be zero.
     DenominatorZero,
+    /// Ran into overflow while computing decimal from or to decimal value.
     DecimalOverflow,
+    /// Decimal odds cannot be less or equal 1.0
     InvalidDecimal,
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::assert_decimal_eq;
+    use rust_decimal_macros::dec;
+
+    use crate::testing_helpers::assert_decimal_eq;
 
     use super::*;
-    use rust_decimal_macros::dec;
 
     // --- Tests for Individual Conversion Functions ---
 
@@ -208,10 +270,12 @@ mod tests {
         // Real-world examples (Favorites)
         assert_decimal_eq(american_to_decimal(-110).unwrap(), dec!(1.91));
 
-        #[cfg(feature = "lookup")]
         assert_decimal_eq(american_to_decimal(-150).unwrap(), dec!(1.67));
-        #[cfg(not(feature = "lookup"))]
-        assert_decimal_eq(american_to_decimal(-150).unwrap(), dec!(1.666));
+
+        assert_decimal_eq(
+            american_to_decimal_custom(-150, ConversionConfig::default().no_lookup()).unwrap(),
+            dec!(1.666),
+        );
 
         assert_decimal_eq(american_to_decimal(-200).unwrap(), dec!(1.5));
         assert_decimal_eq(american_to_decimal(-500).unwrap(), dec!(1.2));
@@ -310,10 +374,14 @@ mod tests {
         assert_eq!(american_to_fractional(-200), Ok((1, 2)));
         assert_eq!(american_to_fractional(-500), Ok((1, 5)));
 
-        #[cfg(feature = "lookup")]
+        // Traditional UK fraction
         assert_eq!(american_to_fractional(-150), Ok((4, 6)));
-        #[cfg(not(feature = "lookup"))]
-        assert_eq!(american_to_fractional(-150), Ok((2, 3)));
+
+        // The same without lookup table
+        assert_eq!(
+            american_to_fractional_custom(-150, ConversionConfig::default().no_lookup()),
+            Ok((2, 3))
+        );
 
         // Real-world examples (Underdogs)
         assert_eq!(american_to_fractional(100), Ok((1, 1)));
@@ -337,7 +405,7 @@ mod tests {
 
     #[test]
     fn test_decimal_to_fractional() {
-        // // Existing tests
+        // Existing tests
         assert_eq!(super::decimal_to_fractional(dec!(1.3)), Ok((3, 10)));
         assert_eq!(super::decimal_to_fractional(dec!(1.33)), Ok((1, 3)));
         assert_eq!(super::decimal_to_fractional(dec!(1.333)), Ok((1, 3)));
@@ -347,7 +415,36 @@ mod tests {
         assert_eq!(super::decimal_to_fractional(dec!(4.1)), Ok((31, 10)));
         assert_eq!(super::decimal_to_fractional(dec!(100.5)), Ok((199, 2)));
 
-        // // Additional real-world cases
+        // Gives 1/3 from lookup tables
+        assert_eq!(
+            super::decimal_to_fractional_custom(
+                dec!(1.33),
+                ConversionConfig::default().plain_fraction_strategy()
+            ),
+            Ok((1, 3))
+        );
+
+        // Gives 33/100 with lookup tables disabled
+        assert_eq!(
+            super::decimal_to_fractional_custom(
+                dec!(1.33),
+                ConversionConfig::default()
+                    .plain_fraction_strategy()
+                    .no_lookup()
+            ),
+            Ok((33, 100))
+        );
+
+        // No lookup for 1.333
+        assert_eq!(
+            super::decimal_to_fractional_custom(
+                dec!(1.333),
+                ConversionConfig::default().plain_fraction_strategy()
+            ),
+            Ok((333, 1000))
+        );
+
+        // Additional real-world cases
         assert_eq!(super::decimal_to_fractional(dec!(1.5)), Ok((1, 2)));
         assert_eq!(super::decimal_to_fractional(dec!(2.0)), Ok((1, 1)));
         assert_eq!(super::decimal_to_fractional(dec!(3.5)), Ok((5, 2)));
