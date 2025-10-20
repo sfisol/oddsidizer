@@ -5,7 +5,6 @@ use crate::ConversionError;
 
 // --- Helper for comparing Decimals in tests ---
 pub fn assert_decimal_eq(a: Decimal, b: Decimal) {
-    use rust_decimal_macros::dec;
     let tolerance = dec!(0.001);
     assert!(
         (a - b).abs() < tolerance,
