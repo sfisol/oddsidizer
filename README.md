@@ -1,6 +1,9 @@
 # Oddsidizer
 
-Rust library converting betting odds between American, Decimal and Fractional formats producing pretty and traditional fractions for display.
+Rust library with tools for converting and formatting data around betting:
+
+1. odds: american, decimal and fractional, formats producing pretty and traditional fractions for display,
+2. race distance (miles, furlongs, yards).
 
 ## Features
 
