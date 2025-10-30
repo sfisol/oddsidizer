@@ -9,6 +9,9 @@ pub use distance::RaceDistance;
 
 mod lookup_tables;
 
+mod lookup_funcs;
+pub use lookup_funcs::*;
+
 mod odds;
 pub use odds::*;
 
