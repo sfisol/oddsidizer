@@ -1,3 +1,5 @@
+#![doc = pretty_readme::docify!("README.md", "https://docs.rs/oddsidizer/latest/oddsidizer/", "./")]
+
 mod config;
 pub use config::*;
 
