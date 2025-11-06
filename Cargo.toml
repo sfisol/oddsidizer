@@ -6,6 +6,9 @@ description = "Rust library for converting betting odds between American, Decima
 readme = "README.md"
 keywords = ["odds", "betting", "gambling"]
 categories = ["mathematics", "value-formatting"]
+homepage = "https://github.com/sfisol/oddsidizer"
+repository = "https://github.com/sfisol/oddsidizer"
+documentation = "https://docs.rs/oddsidizer"
 license = "MIT OR Apache-2.0"
 edition = "2024"
 

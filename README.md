@@ -5,6 +5,13 @@ A rust library with tools for converting and formatting data around betting:
 1. odds: american, decimal and fractional, formats producing pretty and traditional fractions for display,
 2. race distance (miles, furlongs, yards).
 
+[![crates.io](https://img.shields.io/crates/o/oddsidizer)](https://crates.io/crates/oddsidizer)
+[![Documentation](https://docs.rs/oddsidizer/badge.svg)](https://docs.rs/oddsidizer)
+![MIT or Apache 2.0 licensed](https://img.shields.io/crates/l/oddsidizer.svg)
+[![Dependency Status](https://deps.rs/crate/oddsidizer/0.1.0/status.svg)](https://deps.rs/crate/oddsidizer/0.1.0)
+[![CI](https://github.com/sfisol/oddsidizer/actions/workflows/rust.yaml/badge.svg)](https://github.com/sfisol/oddsidizer/actions/workflows/rust.yaml)
+[![downloads](https://img.shields.io/crates/d/oddsidizer.svg)](https://crates.io/crates/oddsidizer)
+
 ## Features
 
 * Based on `rust_decimal`
